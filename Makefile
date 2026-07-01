@@ -34,12 +34,12 @@ install:
 			sleep 0.1; \
 		done; \
 		wait $$pid'
-
+	@UV_SKIP_WHEEL_FILENAME_CHECK=1 uv pip install mazegenerator-00001-py3-none-any.whl
 	@echo "\n$(GREEN)All dependencies successfully installed$(RESET)"
 	@echo "\n$(SUCCESS)Project can now be run safely!$(RESET)"
 
 run:
-	uv run python -m $(EXE) $(FLAGS)
+	uv run python -m $(EXE) src/test.py $(FLAGS)
 
 lint:
 	@echo "$(BOLD)Verifying project source code:$(RESET)"
