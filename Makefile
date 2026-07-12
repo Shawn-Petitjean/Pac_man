@@ -39,7 +39,7 @@ install:
 	@echo "\n$(SUCCESS)Project can now be run safely!$(RESET)"
 
 run:
-	uv run python -m $(EXE) src/test.py $(FLAGS)
+	uv run python -m $(EXE) config.json $(FLAGS)
 
 lint:
 	@echo "$(BOLD)Verifying project source code:$(RESET)"

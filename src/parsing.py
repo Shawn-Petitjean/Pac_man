@@ -1,5 +1,6 @@
 from typing import Any
 from src.config import GameConfig, get_int, get_str, get_levels
+from src.config import read_config_file, strip_comments
 import json
 
 
@@ -12,8 +13,12 @@ def parse_config(text: str) -> dict[str, Any]:
     return data
 
 
-def build_config(data: dict[str, Any]) -> GameConfig:
+def build_config(config_path: str) -> GameConfig:
     """Validate a raw config dict into a safe GameConfig."""
+    text = read_config_file(config_path)
+    text = strip_comments(text)
+    data = parse_config(text)
+
     highscore_filename = get_str(data, "highscore_filename", "highscore")
     lives = get_int(data, "lives", 3, minimum=1)
     level_max_time = get_int(data, "level_max_time", 90, minimum=1)
