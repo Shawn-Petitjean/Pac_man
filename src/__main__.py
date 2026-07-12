@@ -12,8 +12,7 @@ def main() -> None:
 
     try:
         config_path = sys.argv[1]
-        # valide la config au lancement (resultat non utilise pour l'instant)
-        build_config(config_path)
+        config = build_config(config_path)
         menu = Menu()
         running = True
 
