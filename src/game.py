@@ -41,7 +41,7 @@ class Game:
                 i += self.bloc
             j += self.bloc
         while self.running:
-            pygame.display.flip()
+            self.screen.fill("black")
             self.screen.blit(PAC_F, player_pos)
             keys = pygame.key.get_pressed()
             if keys[pygame.K_w]:
