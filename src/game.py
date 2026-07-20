@@ -3,6 +3,13 @@ import pygame
 from .config import N, E, S, W, PAC_F
 
 
+class Cell:
+    def __init__(self, x: int, y: int, value: int):
+        self.x = x
+        self.y = y
+        self.value = value
+
+
 class Game:
     def __init__(self, size: tuple[int, int], res: tuple[int, int]):
         self.mazegen = MazeGenerator(size)
@@ -11,6 +18,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.dt = 0
+        self.cell: [Cell] = []
         if res[0] > res[1]:
             # upsacle le pattern
             # self.padding_h = (max(res) - min(res)) / 2
@@ -21,37 +29,38 @@ class Game:
             self.padding_h = (res[0] - (self.bloc) * (len(self.mazegen.maze))) / 2
         else:
             self.padding_h = (res[0] * 0.1)
-            self.m_bloc = res[0] * 0.01
+            self.m_bloc = res[0] * 0.5
             self.bloc = (((res[0] * 0.8) - (self.m_bloc * (len(self.mazegen.maze) - 1)))
                          / len(self.mazegen.maze))
             self.padding_v = (res[1] - (self.bloc + self.m_bloc) * (len(self.mazegen.maze))) / 2
 
     def run(self):
-        PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
-        PAC_F = pygame.transform.scale(PAC_F,
-                                       (self.bloc * 0.6,
-                                       self.bloc * 0.6))
-        player_pos = pygame.Vector2(self.screen.get_width() / 2, self.screen.get_height() / 2)
+        # PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
+        # PAC_F = pygame.transform.scale(PAC_F,
+        #                                (self.bloc * 0.6,
+        #                                self.bloc * 0.6))
+        # player_pos = pygame.Vector2(self.screen.get_width() / 2, self.screen.get_height() / 2)
         j = 0
         walls = []
         for line in self.mazegen.maze:
             i = 0
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
+                self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
                 i += self.bloc
             j += self.bloc
         while self.running:
             self.screen.fill("black")
-            self.screen.blit(PAC_F, player_pos)
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_w]:
-                player_pos.y -= 300 * self.dt
-            if keys[pygame.K_s]:
-                player_pos.y += 300 * self.dt
-            if keys[pygame.K_a]:
-                player_pos.x -= 300 * self.dt
-            if keys[pygame.K_d]:
-                player_pos.x += 300 * self.dt
+            # self.screen.blit(PAC_F, player_pos)
+            # keys = pygame.key.get_pressed()
+            # if keys[pygame.K_w]:
+            #     player_pos.y -= 300 * self.dt
+            # if keys[pygame.K_s]:
+            #     player_pos.y += 300 * self.dt
+            # if keys[pygame.K_a]:
+            #     player_pos.x -= 300 * self.dt
+            # if keys[pygame.K_d]:
+            #     player_pos.x += 300 * self.dt
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -69,28 +78,28 @@ class Game:
                                      x,
                                      y,
                                      self.bloc,
-                                     self.m_bloc
+                                     self.m_bloc * 2
                                     ))
         if cell & W:
             walls.append(pygame.Rect(
                                  x,
                                  y,
-                                 self.m_bloc,
-                                 self.bloc
+                                 self.m_bloc * 2,
+                                 self.bloc + self.m_bloc * 2 
                                 ))
         if cell & S:
             walls.append(pygame.Rect(
                                  x,
                                  y + self.bloc,
                                  self.bloc,
-                                 self.m_bloc
+                                 self.m_bloc * 2
                                 ))
         if cell & E:
             walls.append(pygame.Rect(
                                  x + self.bloc,
                                  y,
-                                 self.m_bloc,
-                                 self.bloc + self.m_bloc
+                                 self.m_bloc * 2,
+                                 self.bloc + self.m_bloc * 2 
                                 ))
         return walls
         # if walls != None:
