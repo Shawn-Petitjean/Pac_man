@@ -1,6 +1,9 @@
 from mazegenerator import MazeGenerator
 import pygame
-from .config import N, E, S, W, PAC_F
+from .config import N, E, S, W
+
+
+
 
 
 class Cell:
@@ -22,35 +25,47 @@ class Game:
         if res[0] > res[1]:
             # upsacle le pattern
             # self.padding_h = (max(res) - min(res)) / 2
-            self.padding_v = (res[0] - res[1]) * 0.5
-            self.m_bloc = res[1] * 0.01
-            self.bloc = ((res[0] * 0.8) / (len(self.mazegen.maze))) - self.m_bloc
-            self.padding_h = (res[0] - (self.bloc) * (len(self.mazegen.maze))) / 2
+            self.padding_v = (res[0] - res[1]) * 0.75
+            self.m_bloc = ((res[1] - self.padding_v * 2) / (len(self.mazegen.maze) + 1)) * 0.2
+            self.bloc = ((res[1] - self.padding_v * 2) / len(self.mazegen.maze)) * 0.8
+            self.padding_h = (self.m_bloc * len(self.mazegen.maze) + 1) + (self.bloc * len(self.mazegen.maze))
+            self.padding_h = (res[0] - self.padding_h) / 2
         else:
-            self.padding_h = (res[0] * 0.1)
-            self.m_bloc = res[0] * 0.5
-            self.bloc = (((res[0] * 0.8) - (self.m_bloc * (len(self.mazegen.maze) + 1)))
-                         / len(self.mazegen.maze))
-            self.padding_v = (res[1] - (self.bloc + self.m_bloc) * (len(self.mazegen.maze))) / 2
+            self.padding_h = (res[1] - res[0]) * 0.75
+            self.m_bloc = ((res[0] - self.padding_v * 2) / (len(self.mazegen.maze) + 1)) * 0.2
+            self.bloc = ((res[0] - self.padding_v * 2) / len(self.mazegen.maze)) * 0.8
+            self.padding_v = (self.m_bloc * len(self.mazegen.maze) + 1) + (self.bloc * len(self.mazegen.maze))
+            self.padding_v = (res[1] - self.padding_h) / 2
+        # def initialise(self):
 
     def run(self):
-        # PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
-        # PAC_F = pygame.transform.scale(PAC_F,
-        #                                (self.bloc * 0.6,
-        #                                self.bloc * 0.6))
-        # player_pos = pygame.Vector2(self.screen.get_width() / 2, self.screen.get_height() / 2)
+        PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
+        PAC_F = pygame.transform.scale(PAC_F,
+                                       (
+                                        self.bloc * 0.6,
+                                        self.bloc * 0.6
+                                       ))
         j = 0
         walls = []
+        count_l = 0
         for line in self.mazegen.maze:
             i = 0
+            count_c = 0
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
+                if count_c == round(len(self.mazegen.maze[0]) / 2) and count_l == round(len(self.mazegen.maze) / 2):
+                    pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell)
                 self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
+                count_c += 1
                 i += self.bloc + self.m_bloc
             j += self.bloc + self.m_bloc
+            count_l += 1
+        player_pos = pygame.Vector2(pac_spawn.y -20, pac_spawn.x)
+        print(pac_spawn.x)
+        print(pac_spawn.y)
         while self.running:
             self.screen.fill("black")
-            # self.screen.blit(PAC_F, player_pos)
+            self.screen.blit(PAC_F, player_pos)
             # keys = pygame.key.get_pressed()
             # if keys[pygame.K_w]:
             #     player_pos.y -= 300 * self.dt
@@ -74,9 +89,9 @@ class Game:
         walls = []
         if cell & N:
             walls.append(pygame.Rect(
-                                     x,
+                                     x - self.m_bloc,
                                      y - self.m_bloc,
-                                     self.bloc + self.m_bloc,
+                                     self.bloc + self.m_bloc * 2,
                                      self.m_bloc
                                     ))
         if cell & W:
