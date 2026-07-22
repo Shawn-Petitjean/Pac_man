@@ -28,7 +28,7 @@ class Game:
             self.padding_v = (res[0] - res[1]) * 0.75
             self.m_bloc = ((res[1] - self.padding_v * 2) / (len(self.mazegen.maze) + 1)) * 0.2
             self.bloc = ((res[1] - self.padding_v * 2) / len(self.mazegen.maze)) * 0.8
-            self.padding_h = (self.m_bloc * len(self.mazegen.maze) + 1) + (self.bloc * len(self.mazegen.maze))
+            self.padding_h = (self.m_bloc * (len(self.mazegen.maze) + 1)) + (self.bloc * len(self.mazegen.maze))
             self.padding_h = (res[0] - self.padding_h) / 2
         else:
             self.padding_h = (res[1] - res[0]) * 0.75
@@ -47,20 +47,24 @@ class Game:
                                        ))
         j = 0
         walls = []
-        count_l = 0
+        count_l = 1
         for line in self.mazegen.maze:
             i = 0
-            count_c = 0
+            count_c = 1
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
                 if count_c == round(len(self.mazegen.maze[0]) / 2) and count_l == round(len(self.mazegen.maze) / 2):
+                    print(self.padding_h + i)
                     pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell)
                 self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
                 count_c += 1
                 i += self.bloc + self.m_bloc
             j += self.bloc + self.m_bloc
             count_l += 1
-        player_pos = pygame.Vector2(pac_spawn.y -20, pac_spawn.x)
+        player_pos = pygame.Vector2(
+            pac_spawn.x + (self.bloc - PAC_F.get_width()) / 2,
+            pac_spawn.y + (self.bloc - PAC_F.get_height()) / 2,
+        )
         print(pac_spawn.x)
         print(pac_spawn.y)
         while self.running:
