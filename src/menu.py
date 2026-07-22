@@ -1,5 +1,7 @@
 import pygame
 
+from src.screen import Screen
+
 
 class Button:
     """Un bouton de menu : un libelle, une action, un rect."""
@@ -8,12 +10,12 @@ class Button:
     BORDER_RADIUS = 12
     SELECTED_SCALE = 1.05          # upscale de 5% du bouton selectionne
     COLOR_NORMAL = "white"
-    COLOR_SELECTED = "brown3"
+    COLOR_SELECTED = "brown3"      # plus clair que brown4
 
     def __init__(self, label: str, action: str) -> None:
         self.label = label
         self.action = action              # "start", "highscores", "quit"...
-        self.rect = pygame.Rect(0, 0, 0, 0)   # taille/position posees par Menu
+        self.rect = pygame.Rect(0, 0, 0, 0)   # posee par le layout
         self.selected = False
 
     def draw(self, screen: pygame.Surface, font: pygame.font.Font) -> None:
@@ -56,43 +58,27 @@ class Button:
         return self.rect.collidepoint(mouse_pos)
 
 
-class Menu:
-    """Menu principal : navigue au clavier/souris, renvoie l'action choisie."""
+class ButtonMenu(Screen):
+    """Ecran generique : une liste de boutons navigables clavier/souris.
 
-    FPS = 60
-    BACKGROUND = "black"
-    FONT_RATIO = 0.06        # taille de police en % de la hauteur
-    BOX_PAD_W = 0.03         # padding du cadre en % de la largeur
-    BOX_PAD_H = 0.05         # padding du cadre en % de la hauteur
-    GAP_RATIO = 0.04         # ecart entre boutons en % de la hauteur
+    Reutilisable par le menu principal, le menu pause, game over... La
+    sous-classe fournit les boutons ; _region() (surchargeable) donne la
+    zone de placement, par defaut toute la fenetre. Le design (fond,
+    police, style des boutons) est herite/partage, donc identique partout.
+    """
 
-    def __init__(self) -> None:
-        pygame.font.init()
+    BOX_PAD_W = 0.03         # padding du cadre en % de la largeur (region)
+    BOX_PAD_H = 0.05         # padding du cadre en % de la hauteur (region)
+    GAP_RATIO = 0.04         # ecart entre boutons en % de la hauteur (region)
 
-        self.clock = pygame.time.Clock()
-        self.buttons = [
-            Button("Start Game", "start"),
-            Button("Highscores", "highscores"),
-            Button("Instructions", "instructions"),
-            Button("Cheat", "cheat"),
-            Button("Exit", "quit"),
-        ]
-        self.font = pygame.font.Font(None, 48)
-        self._font_h = 0    # hauteur de fenetre pour laquelle self.font existe
+    def __init__(self, buttons: list[Button]) -> None:
+        super().__init__()
+        self.buttons = buttons
         self.selected = 0
-        self.running = False
-        self.result = ""
 
-    def run(self, screen: pygame.Surface) -> str:
-        """Boucle du menu. Renvoie l'action choisie par le joueur."""
-        self.screen = screen
-        self.running = True
-        self.result = ""
-        while self.running:
-            self._handle_events()
-            self._draw()
-            self.clock.tick(self.FPS)
-        return self.result
+    def _region(self) -> pygame.Rect:
+        """Zone de placement des boutons. Defaut : toute la fenetre."""
+        return self.screen.get_rect()
 
     # ---------------------------------------------------------------- events
 
@@ -110,8 +96,8 @@ class Menu:
 
     def _handle_key(self, event: pygame.event.Event) -> None:
         """Fleches = deplacer la selection, Entree/Espace = activer."""
-        # modulo = rotation : depuis le dernier, 5 % 5 = 0 donc retour au
-        # premier ; depuis le premier, -1 % 5 = 4 donc retour au dernier
+        # modulo = rotation : depuis le dernier, n % n = 0 donc retour au
+        # premier ; depuis le premier, -1 % n = n-1 donc retour au dernier
         if event.key == pygame.K_DOWN:
             self.selected = (self.selected + 1) % len(self.buttons)
         elif event.key == pygame.K_UP:
@@ -135,33 +121,22 @@ class Menu:
             if button.is_hovered(pos):
                 self._activate(button.action)
 
-    def _activate(self, action: str) -> None:
-        """Termine le menu en renvoyant l'action choisie."""
-        self.result = action
-        self.running = False
-
     # ---------------------------------------------------------- layout/dessin
 
-    def _update_font(self, h: int) -> None:
-        """Police adaptative : recreee seulement si la hauteur a change."""
-        if h != self._font_h:
-            self.font = pygame.font.Font(None, int(h * self.FONT_RATIO))
-            self._font_h = h
-
     def _layout(self) -> None:
-        """Dimensionne et positionne les boutons selon la fenetre."""
-        w, h = self.screen.get_size()
-        self._update_font(h)
+        """Dimensionne et positionne les boutons dans la region."""
+        region = self._region()
+        self._update_font(region.height)
 
-        cx, cy = w / 2, h / 2      # centre de la fenetre
+        cx, cy = region.center
 
         # taille de cadre commune, depuis le libelle le plus large
         max_w = max(self.font.size(b.label)[0] for b in self.buttons)
-        box_w = max_w + int(w * self.BOX_PAD_W)
-        box_h = self.font.get_height() + int(h * self.BOX_PAD_H)
-        spacing = box_h + int(h * self.GAP_RATIO)
+        box_w = max_w + int(region.width * self.BOX_PAD_W)
+        box_h = self.font.get_height() + int(region.height * self.BOX_PAD_H)
+        spacing = box_h + int(region.height * self.GAP_RATIO)
 
-        # (i - (n-1)/2) etale les boutons autour de cy : le bloc reste centre
+        # (i - (n-1)/2) etale les boutons autour du centre de la region
         n = len(self.buttons)
         for i, button in enumerate(self.buttons):
             y = cy + (i - (n - 1) / 2) * spacing
@@ -171,8 +146,20 @@ class Menu:
 
     def _draw(self) -> None:
         """Dessine la frame : fond, puis chaque bouton."""
-        self.screen.fill(self.BACKGROUND)
+        self._draw_background()
         self._layout()
         for button in self.buttons:
             button.draw(self.screen, self.font)
         pygame.display.flip()
+
+
+class Menu(ButtonMenu):
+    """Menu principal : les boutons du jeu, plein ecran."""
+
+    def __init__(self) -> None:
+        super().__init__([
+            Button("Start Game", "start"),
+            Button("Highscores", "highscores"),
+            Button("Instructions", "instructions"),
+            Button("Exit", "quit"),
+        ])
