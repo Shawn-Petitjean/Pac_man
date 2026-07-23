@@ -3,14 +3,18 @@ import pygame
 from .config import N, E, S, W
 
 
-
-
-
 class Cell:
     def __init__(self, x: int, y: int, value: int):
         self.x = x
         self.y = y
         self.value = value
+
+
+# class Pac_man:
+#     def __init__(self, current: Cell):
+#         self.current = current
+    
+#     def can_i_go(self, direction: int):
 
 
 class Game:
@@ -47,14 +51,15 @@ class Game:
                                        ))
         j = 0
         walls = []
-        count_l = 1
+        count_l = 0
+        keys = []
         for line in self.mazegen.maze:
             i = 0
-            count_c = 1
+            count_c = 0
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
-                if count_c == round(len(self.mazegen.maze[0]) / 2) and count_l == round(len(self.mazegen.maze) / 2):
-                    print(self.padding_h + i)
+                if count_c == round((len(self.mazegen.maze[0]) / 2) - 1) and count_l == round((len(self.mazegen.maze) / 2) - 1):
+
                     pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell)
                 self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
                 count_c += 1
@@ -62,23 +67,22 @@ class Game:
             j += self.bloc + self.m_bloc
             count_l += 1
         player_pos = pygame.Vector2(
-            pac_spawn.x + (self.bloc - PAC_F.get_width()) / 2,
-            pac_spawn.y + (self.bloc - PAC_F.get_height()) / 2,
+            pac_spawn.x + ((self.bloc - (self.m_bloc / 2)) - PAC_F.get_width()) / 2,
+            pac_spawn.y + ((self.bloc) - PAC_F.get_height()) / 2,
         )
-        print(pac_spawn.x)
-        print(pac_spawn.y)
         while self.running:
             self.screen.fill("black")
             self.screen.blit(PAC_F, player_pos)
-            # keys = pygame.key.get_pressed()
-            # if keys[pygame.K_w]:
-            #     player_pos.y -= 300 * self.dt
-            # if keys[pygame.K_s]:
-            #     player_pos.y += 300 * self.dt
-            # if keys[pygame.K_a]:
-            #     player_pos.x -= 300 * self.dt
-            # if keys[pygame.K_d]:
-            #     player_pos.x += 300 * self.dt
+            keys = pygame.key.get_pressed()
+            # pac_man.movable()
+            if keys[pygame.K_w]:
+                player_pos.y -= 300 * self.dt
+            if keys[pygame.K_s]:
+                player_pos.y += 300 * self.dt
+            if keys[pygame.K_a]:
+                player_pos.x -= 300 * self.dt
+            if keys[pygame.K_d]:
+                player_pos.x += 300 * self.dt
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
