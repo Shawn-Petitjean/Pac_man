@@ -4,9 +4,11 @@ Charge le top 10 au demarrage, save en fin de partie.
 """
 
 from dataclasses import dataclass, asdict
+from pathlib import Path
 import json
 
-
+# src/highscore.py -> src -> racine du projet
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MAX_ENTRIES = 10        # on garde le top 10
 MAX_NAME_LEN = 10       # noms <= 10 caracteres (sujet)
 
@@ -33,7 +35,7 @@ class Highscores:
 
     def __init__(self, filename: str) -> None:
         """Prepare le gestionnaire pour un fichier donne (ne charge pas)."""
-        self.filename = filename
+        self.path = PROJECT_ROOT / filename
         self._entries: list[HighscoreEntry] = []
 
     def load(self) -> None:
@@ -44,7 +46,7 @@ class Highscores:
         """
         self._entries = []
         try:
-            with open(self.filename, "r", encoding="utf-8") as f:
+            with open(self.path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except (OSError, json.JSONDecodeError):
             return                          # absent ou corrompu -> liste vide
@@ -60,7 +62,8 @@ class Highscores:
     def save(self) -> None:
         """Ecrit les entrees courantes dans le fichier JSON."""
         data = [asdict(e) for e in self.entries()]
-        with open(self.filename, "w", encoding="utf-8") as f:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
     def add(self, name: str, score: int) -> None:

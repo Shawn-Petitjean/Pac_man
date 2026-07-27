@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import pygame
+from PIL import Image
 
 from src.screen import Screen
+
+SPRITE_DIR = Path(__file__).resolve().parent.parent / "sprites"
 
 
 class Button:
@@ -10,7 +15,7 @@ class Button:
     BORDER_RADIUS = 12
     SELECTED_SCALE = 1.05          # upscale de 5% du bouton selectionne
     COLOR_NORMAL = "white"
-    COLOR_SELECTED = "brown3"      # plus clair que brown4
+    COLOR_SELECTED = "gold1"
 
     def __init__(self, label: str, action: str) -> None:
         self.label = label
@@ -145,16 +150,102 @@ class ButtonMenu(Screen):
             button.selected = (i == self.selected)
 
     def _draw(self) -> None:
-        """Dessine la frame : fond, puis chaque bouton."""
+        """Dessine la frame : fond, boutons, puis extras (titre...)."""
         self._draw_background()
         self._layout()
         for button in self.buttons:
             button.draw(self.screen, self.font)
+        self._draw_extra()
         pygame.display.flip()
+
+    def _draw_extra(self) -> None:
+        """Dessin par-dessus les boutons (titre...). Vide par defaut,
+        surchargeable (ex: le titre du menu principal)."""
+
+
+class ChaseParade:
+    """Animation d'attract : Pac-Man poursuivi par les fantomes vers la gauche.
+
+    Charge toutes les frames de chaque GIF anime (via Pillow) une seule
+    fois, defile de droite a gauche en boucle, et cycle les frames pour
+    animer (waka-waka de Pac-Man, dandinement des fantomes).
+    """
+
+    ORDER = ["Pac-Man", "Blinky", "Pinky", "Inky", "Clyde"]  # Pac-Man devant
+    SIZE_RATIO = 0.03     # hauteur d'un sprite en % de la hauteur de fenetre
+    SPEED_RATIO = 0.003   # deplacement/frame en % de la largeur de fenetre
+    GAP = 1.8             # espacement entre sprites (x largeur d'un sprite)
+    FRAME_MS = 120        # duree d'affichage d'une frame d'animation (ms)
+
+    def __init__(self) -> None:
+        # frames a taille native, chargees une seule fois
+        self._raw = [self._load_frames(name) for name in self.ORDER]
+        # versions redimensionnees selon la fenetre (remplies au 1er draw)
+        self.animations: list[list[pygame.Surface]] = self._raw
+        self._scaled_h = 0    # hauteur de fenetre pour laquelle scale est fait
+        self.x = 0.0
+        self._started = False
+
+    def _load_frames(self, name: str) -> list[pygame.Surface]:
+        """Extrait les frames d'un GIF anime, taille native, avec alpha."""
+        filename = f"Arcade - Pac-Man - General Sprites - {name} (Left).gif"
+        gif = Image.open(SPRITE_DIR / filename)
+        frames: list[pygame.Surface] = []
+        for i in range(getattr(gif, "n_frames", 1)):
+            gif.seek(i)
+            rgba = gif.convert("RGBA")   # PIL gere la transparence -> alpha
+            surf = pygame.image.frombytes(
+                rgba.tobytes(), rgba.size, "RGBA").convert_alpha()
+            frames.append(surf)
+        return frames
+
+    def _rescale(self, h: int) -> None:
+        """Redimensionne les sprites si la hauteur de fenetre a change."""
+        if h == self._scaled_h:
+            return
+        self._scaled_h = h
+        target = max(1, int(h * self.SIZE_RATIO))   # hauteur cible d'un sprite
+        self.animations = []
+        for frames in self._raw:
+            factor = target / frames[0].get_height()
+            self.animations.append([
+                pygame.transform.scale(
+                    f, (int(f.get_width() * factor), target))
+                for f in frames
+            ])
+
+    def draw(self, screen: pygame.Surface, y: int) -> None:
+        """Redimensionne au besoin, avance la parade, cycle les frames."""
+        w, h = screen.get_size()
+        self._rescale(h)
+
+        step = int(self.animations[0][0].get_width() * self.GAP)
+        group_w = step * len(self.animations)
+        if not self._started or self.x + group_w < 0:
+            self.x = float(w)     # (re)part du bord droit
+            self._started = True
+
+        now = pygame.time.get_ticks()
+        x = self.x
+        for frames in self.animations:
+            i = (now // self.FRAME_MS) % len(frames)   # frame courante
+            screen.blit(frames[i], (int(x), y))
+            x += step
+        self.x -= self.SPEED_RATIO * w    # vitesse proportionnelle a w
 
 
 class Menu(ButtonMenu):
-    """Menu principal : les boutons du jeu, plein ecran."""
+    """Menu principal : titre PAC-MAN (gros) + boutons (plus petits)."""
+
+    FONT_RATIO = 0.045       # boutons plus petits que le titre
+    TITLE = "PAC-MAN"
+    TITLE_RATIO = 0.16       # titre bien plus gros que les boutons
+    TITLE_COLOR = "yellow"   # couleur Pac-Man
+    OUTLINE_COLOR = "gold"   # contour doré, tres leger
+    OUTLINE_RATIO = 0.03     # epaisseur du contour en % de la taille du titre
+    TITLE_Y = 0.16           # centre vertical du titre (% de la hauteur)
+    PARADE_Y = 0.30          # haut des sprites de la parade (% de la hauteur)
+    TOP_MARGIN = 0.42        # place reservee en haut (titre + parade)
 
     def __init__(self) -> None:
         super().__init__([
@@ -163,3 +254,32 @@ class Menu(ButtonMenu):
             Button("Instructions", "instructions"),
             Button("Exit", "quit"),
         ])
+        self.title_font = pygame.font.Font(None, 48)
+        self._title_h = 0    # hauteur pour laquelle title_font existe
+        self.parade = ChaseParade()
+
+    def _region(self) -> pygame.Rect:
+        """Les boutons occupent la zone SOUS le titre (partie basse)."""
+        r = self.screen.get_rect()
+        top = int(r.height * self.TOP_MARGIN)
+        return pygame.Rect(0, top, r.width, r.height - top)
+
+    def _draw_extra(self) -> None:
+        """Dessine le titre PAC-MAN, avec un contour dore tres leger."""
+        w, h = self.screen.get_size()
+        if h != self._title_h:       # police du titre recreee au resize
+            self.title_font = pygame.font.Font(None, int(h * self.TITLE_RATIO))
+            self._title_h = h
+
+        center = (w / 2, h * self.TITLE_Y)
+        # contour : le titre en dore, decale de quelques px dans 4 directions
+        outline = self.title_font.render(self.TITLE, True, self.OUTLINE_COLOR)
+        off = max(1, int(h * self.TITLE_RATIO * self.OUTLINE_RATIO))
+        for dx, dy in ((-off, 0), (off, 0), (0, -off), (0, off)):
+            rect = outline.get_rect(center=(center[0] + dx, center[1] + dy))
+            self.screen.blit(outline, rect)
+        # le titre jaune par-dessus
+        title = self.title_font.render(self.TITLE, True, self.TITLE_COLOR)
+        self.screen.blit(title, title.get_rect(center=center))
+        # la parade de sprites defile sous le titre
+        self.parade.draw(self.screen, int(h * self.PARADE_Y))

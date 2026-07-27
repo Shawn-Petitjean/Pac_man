@@ -4,7 +4,8 @@ import pygame
 
 from src.parsing import build_config
 from src.menu import Menu
-from src.screen import Instructions
+from src.screen import Instructions, HighscoresScreen, EndScreen
+from src.highscore import Highscores
 
 
 def main() -> None:
@@ -15,7 +16,9 @@ def main() -> None:
 
     try:
         config_path = sys.argv[1]
-        build_config(config_path)      # valide la config au lancement
+        config = build_config(config_path)      # valide la config au lancement
+        highscores = Highscores(config.highscore_filename)
+        highscores.load()
         pygame.init()
         screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
         menu = Menu()
@@ -28,6 +31,11 @@ def main() -> None:
             elif result == "instructions":
                 if Instructions().run(screen) == "quit":
                     running = False
+            elif result == "highscores":
+                if HighscoresScreen(highscores).run(screen) == "quit":
+                    running = False
+            elif result == "start":
+                EndScreen(highscores, 1234, "GAME OVER").run(screen)
     except Exception as e:
         print(f"an error occurred {e.__class__.__name__}\n{e}")
     finally:
