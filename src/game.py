@@ -10,12 +10,18 @@ class Cell:
         self.value = value
 
 
-# class Pac_man:
-#     def __init__(self, current: Cell):
-#         self.current = current
+class Pac_man:
+    def __init__(self, current: Cell, x: int, y: int):
+        self.current = current
+        self.x = x
+        self.y = y
     
-#     def can_i_go(self, direction: int):
-
+    def can_i_go(self, keys):
+        if (not self.x == self.current.x + (self.bloc / 2)
+            and not self.y == self.current.y + (self.bloc / 2)):
+            return
+        if keys[pygame.K_w] and not self.curent.value & N:
+                self.y -= 100 * self.dt
 
 class Game:
     def __init__(self, size: tuple[int, int], res: tuple[int, int]):
@@ -29,18 +35,23 @@ class Game:
         if res[0] > res[1]:
             # upsacle le pattern
             # self.padding_h = (max(res) - min(res)) / 2
-            self.padding_v = (res[0] - res[1]) * 0.75
+            # self.padding_v = (res[0] - res[1]) * 0.75
+            self.padding_v = res[1] * 0.1
             self.m_bloc = ((res[1] - self.padding_v * 2) / (len(self.mazegen.maze) + 1)) * 0.2
             self.bloc = ((res[1] - self.padding_v * 2) / len(self.mazegen.maze)) * 0.8
             self.padding_h = (self.m_bloc * (len(self.mazegen.maze) + 1)) + (self.bloc * len(self.mazegen.maze))
             self.padding_h = (res[0] - self.padding_h) / 2
         else:
-            self.padding_h = (res[1] - res[0]) * 0.75
+            self.padding_v = res[1] * 0.1
             self.m_bloc = ((res[0] - self.padding_v * 2) / (len(self.mazegen.maze) + 1)) * 0.2
             self.bloc = ((res[0] - self.padding_v * 2) / len(self.mazegen.maze)) * 0.8
             self.padding_v = (self.m_bloc * len(self.mazegen.maze) + 1) + (self.bloc * len(self.mazegen.maze))
             self.padding_v = (res[1] - self.padding_h) / 2
         # def initialise(self):
+
+    def processed_keys(self, keys, key_pressed):
+        pass
+
 
     def run(self):
         PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
@@ -59,7 +70,6 @@ class Game:
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
                 if count_c == round((len(self.mazegen.maze[0]) / 2) - 1) and count_l == round((len(self.mazegen.maze) / 2) - 1):
-
                     pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell)
                 self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
                 count_c += 1
@@ -70,19 +80,25 @@ class Game:
             pac_spawn.x + ((self.bloc - (self.m_bloc / 2)) - PAC_F.get_width()) / 2,
             pac_spawn.y + ((self.bloc) - PAC_F.get_height()) / 2,
         )
+        pac_m = Pac_man(
+                        pac_spawn,
+                        pac_spawn.x + ((self.bloc - (self.m_bloc / 2)) - PAC_F.get_width()) / 2,
+                        pac_spawn.y + ((self.bloc) - PAC_F.get_height()) / 2
+                        )
         while self.running:
             self.screen.fill("black")
             self.screen.blit(PAC_F, player_pos)
+            # keys = processed_keys(keys, pygame.key.get_pressed())
             keys = pygame.key.get_pressed()
             # pac_man.movable()
             if keys[pygame.K_w]:
-                player_pos.y -= 300 * self.dt
+                player_pos.y -= 100 * self.dt
             if keys[pygame.K_s]:
-                player_pos.y += 300 * self.dt
+                player_pos.y += 100 * self.dt
             if keys[pygame.K_a]:
-                player_pos.x -= 300 * self.dt
+                player_pos.x -= 100 * self.dt
             if keys[pygame.K_d]:
-                player_pos.x += 300 * self.dt
+                player_pos.x += 100 * self.dt
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -92,7 +108,7 @@ class Game:
             pygame.display.update()
             pygame.display.flip()
         pygame.quit()
-    
+
     def put_walls(self, cell: int, x: int, y: int):
         walls = []
         if cell & N:
@@ -123,14 +139,59 @@ class Game:
                                  self.m_bloc,
                                  self.bloc + self.m_bloc
                                 ))
-        walls.append(pygame.Rect(
-                             x + (self.bloc / 2) - 5,
-                             y + (self.bloc / 2) - 5,
-                             10,
-                             10
-                            ))
         return walls
-        # if walls != None:
-        #     for wall in walls:
-        #         pygame.draw.rect(self.screen, "blue", wall)
-        #         pygame.display.update()
+
+    # def put_walls(self, cell: int, x: int, y: int):
+    #     walls = []
+    #     if cell & N:
+    #         walls.append(pygame.Rect(
+    #                                  x - self.m_bloc - ((self.bloc / 2) - 5),
+    #                                  y - self.m_bloc,
+    #                                  self.bloc + self.m_bloc * 2,
+    #                                  self.m_bloc + (self.bloc - 5)
+    #                                 ))
+    #     # else:
+    #         # walls.append(pygame.Rect(
+    #         #                          x - self.m_bloc - (self.bloc / 2 - 5),
+    #         #                          y - self.m_bloc,
+    #         #                          self.bloc + self.m_bloc * 2,
+    #         #                          self.m_bloc + (self.bloc - 10)
+    #         #                         ))
+    #     if cell & W:
+    #         walls.append(pygame.Rect(
+    #                              x - self.m_bloc + ((self.bloc / 2) - 5),
+    #                              y,
+    #                              self.m_bloc + (self.bloc - 10),
+    #                              self.bloc + self.m_bloc
+    #                             ))
+    #     if cell & S:
+    #         walls.append(pygame.Rect(
+    #                              x,
+    #                              y + self.bloc - ((self.bloc / 2) - 5),
+    #                              self.bloc + self.m_bloc,
+    #                              self.m_bloc + (self.bloc - 10)
+    #                             ))
+    #     if cell & E:
+    #         walls.append(pygame.Rect(
+    #                              x + self.bloc - ((self.bloc / 2) - 5),
+    #                              y,
+    #                              self.m_bloc + (self.bloc - 10),
+    #                              self.bloc + self.m_bloc
+    #                             ))
+    #     walls.append(pygame.Rect(
+    #                          x + (self.bloc / 2) - 5,
+    #                          y + (self.bloc / 2) - 5,
+    #                          10,
+    #                          10
+    #                         ))
+    #     return walls
+    
+    def valid_keys(keys):
+            if keys[pygame.K_w]:
+                player_pos.y -= 300 * self.dt
+            if keys[pygame.K_s]:
+                player_pos.y += 300 * self.dt
+            if keys[pygame.K_a]:
+                player_pos.x -= 300 * self.dt
+            if keys[pygame.K_d]:
+                player_pos.x += 300 * self.dt
