@@ -69,7 +69,7 @@ class TextScreen(Screen):
     retour au menu). Les sous-classes fournissent le contenu via _lines().
     """
 
-    LINE_GAP = 0.015         # ecart entre lignes en % de la hauteur
+    LINE_GAP = 0.015
 
     @abstractmethod
     def _lines(self) -> list[str]:
@@ -81,7 +81,7 @@ class TextScreen(Screen):
                 self._activate("quit")
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self._activate("")      # retour au menu
+                    self._activate("")
 
     def _draw(self) -> None:
         self._draw_background()
@@ -91,7 +91,6 @@ class TextScreen(Screen):
         cx = w / 2
         line_h = self.font.get_height() + int(h * self.LINE_GAP)
 
-        # (i - (n-1)/2) : meme centrage vertical que les boutons du menu
         lines = self._lines()
         n = len(lines)
         for i, line in enumerate(lines):
@@ -104,7 +103,7 @@ class TextScreen(Screen):
 class Instructions(TextScreen):
     """Ecran d'aide : affiche les controles et les regles (lignes fixes)."""
 
-    FONT_RATIO = 0.04        # plus petit que le menu : beaucoup de lignes
+    FONT_RATIO = 0.04
 
     def _lines(self) -> list[str]:
         return [
@@ -154,17 +153,17 @@ class EndScreen(TextScreen):
                 self._activate("quit")
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    self._validate()               # valider le nom
+                    self._validate()
                 elif event.key == pygame.K_BACKSPACE:
-                    self.name = self.name[:-1]     # effacer le dernier
+                    self.name = self.name[:-1]
                 else:
-                    self.name += event.unicode     # ajouter le caractere tape
+                    self.name += event.unicode
 
     def _validate(self) -> None:
         # clean_name est reapplique dans add()
         self.highscores.add(self.name, self.score)
         self.highscores.save()
-        self._activate("")                         # retour au menu
+        self._activate("")
 
     def _lines(self) -> list[str]:
         return [

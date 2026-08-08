@@ -4,8 +4,10 @@ import pygame
 
 from src.parsing import build_config
 from src.menu import Menu
-from src.screen import Instructions, HighscoresScreen, EndScreen
+from src.screen import Instructions, HighscoresScreen
 from src.highscore import Highscores
+from src.game import Game
+from src.config import Cheat
 
 
 def main() -> None:
@@ -16,9 +18,10 @@ def main() -> None:
 
     try:
         config_path = sys.argv[1]
-        config = build_config(config_path)      # valide la config au lancement
+        config = build_config(config_path)
         highscores = Highscores(config.highscore_filename)
         highscores.load()
+        cheats = Cheat()
         pygame.init()
         screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
         menu = Menu()
@@ -26,6 +29,7 @@ def main() -> None:
         running = True
         while running:
             result = menu.run(screen)
+            print(result)
             if result == "quit":
                 running = False
             elif result == "instructions":
@@ -35,9 +39,11 @@ def main() -> None:
                 if HighscoresScreen(highscores).run(screen) == "quit":
                     running = False
             elif result == "start":
-                EndScreen(highscores, 1234, "GAME OVER").run(screen)
+                size = (config.size.width, config.size.height)
+                if Game(screen, size, cheats).run() == "quit":
+                    running = False
     except Exception as e:
-        print(f"an error occurred {e.__class__.__name__}\n{e}")
+        print(f"An error occurred '{e.__class__.__name__}'\n'{e}'")
     finally:
         pygame.quit()
 

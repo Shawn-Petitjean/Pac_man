@@ -5,11 +5,7 @@
 
     # Un objet par niveau. Le premier niveau utilise 'seed' ci-dessous ;
     # les niveaux suivants sont generes aleatoirement (cote moteur).
-    "levels": [
-        { "width": 21, "height": 21 },
-        { "width": 21, "height": 21 },
-        { "width": 25, "height": 25 }
-    ],
+    "size": {"width" : 20, "height": 20},
 
     # Le '#' ci-dessous est DANS une string : il doit rester intact.
     "seed": 42,

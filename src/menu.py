@@ -4,6 +4,7 @@ import pygame
 from PIL import Image
 
 from src.screen import Screen
+from src.config import Cheat
 
 SPRITE_DIR = Path(__file__).resolve().parent.parent / "sprites"
 
@@ -13,14 +14,14 @@ class Button:
 
     BORDER_WIDTH = 3
     BORDER_RADIUS = 12
-    SELECTED_SCALE = 1.05          # upscale de 5% du bouton selectionne
+    SELECTED_SCALE = 1.05
     COLOR_NORMAL = "white"
     COLOR_SELECTED = "gold1"
 
     def __init__(self, label: str, action: str) -> None:
         self.label = label
-        self.action = action              # "start", "highscores", "quit"...
-        self.rect = pygame.Rect(0, 0, 0, 0)   # posee par le layout
+        self.action = action
+        self.rect = pygame.Rect(0, 0, 0, 0)
         self.selected = False
 
     def draw(self, screen: pygame.Surface, font: pygame.font.Font) -> None:
@@ -85,6 +86,12 @@ class ButtonMenu(Screen):
         """Zone de placement des boutons. Defaut : toute la fenetre."""
         return self.screen.get_rect()
 
+    def _label_width(self, button: "Button") -> int:
+        """Largeur du libelle pour dimensionner les boites. Surchargeable
+        (ex: CheatMenu mesure l'etat le plus large pour eviter que les
+        boites retrecissent quand un toggle passe de OFF a ON)."""
+        return self.font.size(button.label)[0]
+
     # ---------------------------------------------------------------- events
 
     def _handle_events(self) -> None:
@@ -101,8 +108,6 @@ class ButtonMenu(Screen):
 
     def _handle_key(self, event: pygame.event.Event) -> None:
         """Fleches = deplacer la selection, Entree/Espace = activer."""
-        # modulo = rotation : depuis le dernier, n % n = 0 donc retour au
-        # premier ; depuis le premier, -1 % n = n-1 donc retour au dernier
         if event.key == pygame.K_DOWN:
             self.selected = (self.selected + 1) % len(self.buttons)
         elif event.key == pygame.K_UP:
@@ -136,7 +141,7 @@ class ButtonMenu(Screen):
         cx, cy = region.center
 
         # taille de cadre commune, depuis le libelle le plus large
-        max_w = max(self.font.size(b.label)[0] for b in self.buttons)
+        max_w = max(self._label_width(b) for b in self.buttons)
         box_w = max_w + int(region.width * self.BOX_PAD_W)
         box_h = self.font.get_height() + int(region.height * self.BOX_PAD_H)
         spacing = box_h + int(region.height * self.GAP_RATIO)
@@ -171,18 +176,16 @@ class ChaseParade:
     animer (waka-waka de Pac-Man, dandinement des fantomes).
     """
 
-    ORDER = ["Pac-Man", "Blinky", "Pinky", "Inky", "Clyde"]  # Pac-Man devant
-    SIZE_RATIO = 0.03     # hauteur d'un sprite en % de la hauteur de fenetre
-    SPEED_RATIO = 0.003   # deplacement/frame en % de la largeur de fenetre
-    GAP = 1.8             # espacement entre sprites (x largeur d'un sprite)
-    FRAME_MS = 120        # duree d'affichage d'une frame d'animation (ms)
+    ORDER = ["Pac-Man", "Blinky", "Pinky", "Inky", "Clyde"]
+    SIZE_RATIO = 0.03 
+    SPEED_RATIO = 0.003
+    GAP = 1.8
+    FRAME_MS = 120
 
     def __init__(self) -> None:
-        # frames a taille native, chargees une seule fois
         self._raw = [self._load_frames(name) for name in self.ORDER]
-        # versions redimensionnees selon la fenetre (remplies au 1er draw)
         self.animations: list[list[pygame.Surface]] = self._raw
-        self._scaled_h = 0    # hauteur de fenetre pour laquelle scale est fait
+        self._scaled_h = 0
         self.x = 0.0
         self._started = False
 
@@ -193,7 +196,7 @@ class ChaseParade:
         frames: list[pygame.Surface] = []
         for i in range(getattr(gif, "n_frames", 1)):
             gif.seek(i)
-            rgba = gif.convert("RGBA")   # PIL gere la transparence -> alpha
+            rgba = gif.convert("RGBA")
             surf = pygame.image.frombytes(
                 rgba.tobytes(), rgba.size, "RGBA").convert_alpha()
             frames.append(surf)
@@ -204,7 +207,7 @@ class ChaseParade:
         if h == self._scaled_h:
             return
         self._scaled_h = h
-        target = max(1, int(h * self.SIZE_RATIO))   # hauteur cible d'un sprite
+        target = max(1, int(h * self.SIZE_RATIO)) 
         self.animations = []
         for frames in self._raw:
             factor = target / frames[0].get_height()
@@ -222,16 +225,16 @@ class ChaseParade:
         step = int(self.animations[0][0].get_width() * self.GAP)
         group_w = step * len(self.animations)
         if not self._started or self.x + group_w < 0:
-            self.x = float(w)     # (re)part du bord droit
+            self.x = float(w) 
             self._started = True
 
         now = pygame.time.get_ticks()
         x = self.x
         for frames in self.animations:
-            i = (now // self.FRAME_MS) % len(frames)   # frame courante
+            i = (now // self.FRAME_MS) % len(frames) 
             screen.blit(frames[i], (int(x), y))
             x += step
-        self.x -= self.SPEED_RATIO * w    # vitesse proportionnelle a w
+        self.x -= self.SPEED_RATIO * w
 
 
 class Menu(ButtonMenu):
@@ -255,7 +258,7 @@ class Menu(ButtonMenu):
             Button("Exit", "quit"),
         ])
         self.title_font = pygame.font.Font(None, 48)
-        self._title_h = 0    # hauteur pour laquelle title_font existe
+        self._title_h = 0
         self.parade = ChaseParade()
 
     def _region(self) -> pygame.Rect:
@@ -267,19 +270,114 @@ class Menu(ButtonMenu):
     def _draw_extra(self) -> None:
         """Dessine le titre PAC-MAN, avec un contour dore tres leger."""
         w, h = self.screen.get_size()
-        if h != self._title_h:       # police du titre recreee au resize
+        if h != self._title_h:
             self.title_font = pygame.font.Font(None, int(h * self.TITLE_RATIO))
             self._title_h = h
 
         center = (w / 2, h * self.TITLE_Y)
-        # contour : le titre en dore, decale de quelques px dans 4 directions
         outline = self.title_font.render(self.TITLE, True, self.OUTLINE_COLOR)
         off = max(1, int(h * self.TITLE_RATIO * self.OUTLINE_RATIO))
         for dx, dy in ((-off, 0), (off, 0), (0, -off), (0, off)):
             rect = outline.get_rect(center=(center[0] + dx, center[1] + dy))
             self.screen.blit(outline, rect)
-        # le titre jaune par-dessus
         title = self.title_font.render(self.TITLE, True, self.TITLE_COLOR)
         self.screen.blit(title, title.get_rect(center=center))
-        # la parade de sprites defile sous le titre
         self.parade.draw(self.screen, int(h * self.PARADE_Y))
+
+
+class PauseMenu(ButtonMenu):
+    """Menu pause : boutons dans un carre central, par-dessus le jeu fige."""
+
+    PANEL_PAD = 40
+    PANEL_RADIUS = 16
+    REGION_RATIO = 0.5
+
+    def __init__(self, cheats: Cheat) -> None:
+        self.cheats = cheats
+        super().__init__([
+            Button("Resume", "resume"),
+            Button("Cheat", "cheat"),
+            Button("Main Menu", "menu"),
+        ])
+
+    def _region(self) -> pygame.Rect:
+        """Un carre centre, pas toute la fenetre."""
+        r = self.screen.get_rect()
+        size = int(min(r.width, r.height) * self.REGION_RATIO)
+        rect = pygame.Rect(0, 0, size, size)
+        rect.center = r.center
+        return rect
+
+    def _handle_key(self, event: pygame.event.Event) -> None:
+        """Echap = reprendre ; sinon navigation normale."""
+        if event.key == pygame.K_ESCAPE:
+            self._activate("resume")
+        else:
+            super()._handle_key(event)
+
+    def _activate(self, action: str) -> None:
+        """"cheat" ouvre le menu de triche puis revient ; sinon, ferme."""
+        if action == "cheat":
+            CheatMenu(self.cheats).run(self.screen)
+        else:
+            super()._activate(action)
+
+    def _draw_background(self) -> None:
+        """Fond opaque : le jeu est totalement cache derriere le menu pause."""
+        self.screen.fill(self.BACKGROUND)
+
+        # panneau central derriere les boutons
+        panel = self._region().inflate(self.PANEL_PAD, self.PANEL_PAD)
+        pygame.draw.rect(self.screen, (20, 20, 40), panel,
+                         border_radius=self.PANEL_RADIUS)
+        pygame.draw.rect(self.screen, "white", panel,
+                         width=2, border_radius=self.PANEL_RADIUS)
+
+
+class CheatMenu(ButtonMenu):
+    """Menu de triche : chaque bouton bascule un flag du Cheat partage.
+
+    Contrairement a un menu normal, activer un toggle ne ferme pas le menu :
+    ca inverse le flag et on reste. Seul "Retour" (ou Echap) ferme.
+    """
+
+    TOGGLES = [
+        ("Invincible", "invincible"),
+        ("Vitesse", "speed"),
+        ("Niveau suivant", "next_level"),
+    ]
+
+    def __init__(self, cheats: Cheat) -> None:
+        self.cheats = cheats
+        self._base = {flag: label for label, flag in self.TOGGLES}
+        buttons = [Button("", flag) for _, flag in self.TOGGLES]
+        buttons.append(Button("Retour", "back"))
+        super().__init__(buttons)
+
+    def _label_width(self, button: Button) -> int:
+        """Mesure toujours l'etat le plus large ("OFF") -> largeur stable."""
+        if button.action in self._base:
+            return self.font.size(f"{self._base[button.action]} : OFF")[0]
+        return self.font.size(button.label)[0]
+
+    def _handle_key(self, event: pygame.event.Event) -> None:
+        if event.key == pygame.K_ESCAPE:
+            self._activate("back")
+        else:
+            super()._handle_key(event)
+
+    def _activate(self, action: str) -> None:
+        if action == "back":
+            self.running = False
+        elif action == "quit":
+            self.result = "quit"
+            self.running = False
+        else:
+            setattr(self.cheats, action, not getattr(self.cheats, action))
+
+    def _layout(self) -> None:
+        # libelles "ON/OFF" a jour avant le calcul de taille et le rendu
+        for (label, flag), button in zip(self.TOGGLES, self.buttons):
+            state = "ON" if getattr(self.cheats, flag) else "OFF"
+            button.label = f"{label} : {state}"
+        super()._layout()
