@@ -1,6 +1,9 @@
 from mazegenerator import MazeGenerator
 import pygame
-from .config import N, E, S, W
+from .sprite import Pac_man, Red_Ghost
+
+from .config import N, E, S, W, Cheat
+from .menu import PauseMenu
 
 class Pac_gum:
     def __init__(self, x: int, y: int, rect):
@@ -17,23 +20,16 @@ class Cell:
         self.pac_g = None
 
 
-class Pac_man:
-    def __init__(self, current: Cell, x: int, y: int, center: list[int, int]):
-        self.current = current
-        self.x = x
-        self.y = y
-        self.center = center
-        self.d = None
-        self.n_gum = 0
-
-
 class Game:
-    def __init__(self, size: tuple[int, int], res: tuple[int, int]):
+    def __init__(self, screen: pygame.Surface, size: tuple[int, int],
+                 cheats: Cheat):
         self.mazegen = MazeGenerator(size)
-        pygame.init()
-        self.screen = pygame.display.set_mode(res)
+        self.screen = screen
+        self.cheats = cheats
+        res = screen.get_size()
         self.clock = pygame.time.Clock()
         self.running = True
+        self.result = ""
         self.rows = len(self.mazegen.maze)
         self.cols = len(self.mazegen.maze[0])
         self.len = self.cols
@@ -170,31 +166,27 @@ class Game:
 
         # cordinate.index(new_cell) -> 3
 
-    def run(self):
-        PAC_F = pygame.image.load("sprite/pac_man/pac_man_f.png").convert()
-        PAC_F = pygame.transform.scale(PAC_F,
-                                       (
-                                        self.bloc * 0.6,
-                                        self.bloc * 0.6
-                                       ))
+    def run(self) -> str:
+        r1 = 0 if len(self.mazegen.maze[0]) % 2 == 0 else 1
+        r2 = 0 if len(self.mazegen.maze) % 2 == 0 else 1
         j = 0
-        k = 0
+        k = False
         walls = []
         count_l = 0
-        keys = None
         for line in self.mazegen.maze:
             i = 0
             count_c = 0
             for cell in line:
                 walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
-                if count_c == round((len(self.mazegen.maze[0]) / 2) - 1) and count_l == round((len(self.mazegen.maze) / 2) - 1):
+                if (count_c == round((len(self.mazegen.maze[0]) / 2) - 1) + r1 
+                    and count_l == round((len(self.mazegen.maze) / 2) - 1) + r2):
                     pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell)
-                    k = 1
-                if not k == 1:
+                    k = True
+                if not k:
                     self.cell.append(Cell(self.padding_h + i, self.padding_v + j, cell))
                 else:
                     self.cell.append(pac_spawn)
-                    k = 0
+                    k = False
                 count_c += 1
                 i += self.bloc + self.m_bloc
             j += self.bloc + self.m_bloc
@@ -202,18 +194,34 @@ class Game:
         self.init_pac_gum()
         pac_m = Pac_man(
                         pac_spawn,
-                        pac_spawn.x + ((self.bloc - (self.m_bloc / 2)) - PAC_F.get_width()) / 2,
-                        pac_spawn.y + ((self.bloc) - PAC_F.get_height()) / 2,
-                        [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)]
+                        pac_spawn.x + ((self.bloc - (self.m_bloc / 2)) - self.bloc * 0.6) / 2,
+                        pac_spawn.y + ((self.bloc) - self.bloc * 0.6) / 2,
+                        [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)],
+                        self.bloc
                         )
+        ghost_r = Red_Ghost(
+                            self.cell[0],
+                            self.cell[0].x + ((self.bloc - (self.m_bloc / 2)) - self.bloc * 0.6) / 2,
+                            self.cell[0].y + ((self.bloc) - self.bloc * 0.6) / 2,
+                            self.bloc
+                            )
         while self.running:
             self.screen.fill("black")
-            self.screen.blit(PAC_F, (pac_m.x, pac_m.y))
             self.processed_keys(pygame.key.get_pressed(), pac_m)
             self.move(pac_m)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.result = "quit"
                     self.running = False
+                elif (event.type == pygame.KEYDOWN
+                        and event.key == pygame.K_ESCAPE):
+                    choice = PauseMenu(self.cheats).run(self.screen)
+                    if choice == "menu":
+                        self.running = False
+                    elif choice == "quit":
+                        self.result = "quit"
+                        self.running = False
+                    self.clock.tick()
             self.dt = self.clock.tick(60) / 1000
             for wall in walls:
                 pygame.draw.rect(self.screen, "blue", wall)
@@ -224,10 +232,10 @@ class Game:
                 and (pac_m.current.y + (self.bloc / 2)) + 5 >= pac_m.center[1])):
                 pac_m.current.pac_g.eat = True
                 pac_m.n_gum += 1
-            print(pac_m.n_gum)
             for cell in self.cell:
                 if cell.pac_g and not cell.pac_g.eat:
                     pygame.draw.rect(self.screen, "yellow", cell.pac_g.rect)
-            pygame.display.update()
+            self.screen.blit(pac_m.sprite, (pac_m.x, pac_m.y))
+            self.screen.blit(ghost_r.sprite, (ghost_r.x, ghost_r.y))
             pygame.display.flip()
-        pygame.quit()
+        return self.result
