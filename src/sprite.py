@@ -33,7 +33,11 @@ class Pac_man(Sprite):
     def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc: int, maze: MazeGenerator):
         super().__init__(current, x, y, center, bloc, maze)
         self.n_gum = 0
+        self.n_sgum = 0
+        self.n_ghost = 0
         self.d_time = 0
+        self.live = 3
+        self.speed = 150
         self.sprite = pygame.image.load("sprites/pac_man/pac_man_f.png").convert()
         self.sprite = pygame.transform.scale(self.sprite,
                                             (
@@ -41,12 +45,31 @@ class Pac_man(Sprite):
                                              bloc * 0.6
                                             ))
         self.invul = False
+        self.invul_time = 0
+        self.mazegen = maze
 
+    def escape(self):
+        x = 0 if self.current.pos[0] <= len(self.mazegen.maze) else len(self.mazegen.maze) - 1
+        y = 0 if self.current.pos[1] <= len(self.mazegen.maze[0]) else len(self.mazegen.maze[0]) - 1
+        return [x, y]
+
+    def collide(self, ghost: Ghost):
+        if ((self.center[0] - (self.bloc / 2)) <= ghost.center[0]
+            and (self.center[0] + (self.bloc / 2)) >= ghost.center[0] and
+            ((self.center[1] - (self.bloc / 2)) <= ghost.center[1]
+            and (self.center[1] + (self.bloc / 2)) >= ghost.center[1])):
+            if self.invul == True:
+                self.n_ghost += 1
+                ghost.dead = True
+                ghost.d_time = time.time()
+            else:
+                pass
 
 class Ghost(Sprite):
     def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc, maze: MazeGenerator):
         super().__init__(current, x, y, center, bloc, maze)
         self.d_time = 0
+        self.speed = 70
 
 
 class Red_Ghost(Ghost):
@@ -58,13 +81,8 @@ class Red_Ghost(Ghost):
                                              bloc * 0.6,
                                              bloc * 0.6
                                             ))
-        self.current = current
-        self.maze = maze
         self.size = size
-        self.d = None
-        self.dead = False
 
-    
     def collide(self, pac_m: Pac_man):
         if ((self.center[0] - (self.bloc / 2)) <= pac_m.center[0]
             and (self.center[0] + (self.bloc / 2)) >= pac_m.center[0] and
@@ -73,6 +91,7 @@ class Red_Ghost(Ghost):
             if pac_m.invul == False:
                 pac_m.d_time = time.time()
                 pac_m.dead = True
+                pac_m.live -= 1
             else:
                 pass
                 
