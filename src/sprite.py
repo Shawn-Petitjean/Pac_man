@@ -65,6 +65,7 @@ class Pac_man(Sprite):
             else:
                 pass
 
+
 class Ghost(Sprite):
     def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc, maze: MazeGenerator):
         super().__init__(current, x, y, center, bloc, maze)
@@ -92,6 +93,7 @@ class Red_Ghost(Ghost):
                 pac_m.d_time = time.time()
                 pac_m.dead = True
                 pac_m.live -= 1
+                print('|||||||||||||||||||||||||||||||||')
             else:
                 pass
                 

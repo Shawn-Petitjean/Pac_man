@@ -101,7 +101,7 @@ class Game:
 
     def screen_refresh(self):
             score = (self.pacman.n_gum * self.gum_score) + (self.pacman.n_sgum * self.s_gum_score) + (self.pacman.n_ghost * self.ghost_score)
-            score_text = self.font.render(f"Score : {score}" + f"Timer : {round(time.time() - self.add_time)}", True, (255, 255, 255))
+            score_text = self.font.render(f"Score : {score}" + f"Timer : {round(time.time() - self.timer + self.add_time)}", True, (255, 255, 255))
             pygame.display.flip()
             self.screen.fill("black")
             for wall in self.walls:
@@ -199,18 +199,17 @@ class Game:
                     ghost.speed = temp
 
                 elif self.pacman.invul:
-                    self.ghost[0].pathfinding(self.pacman.escape())
-                    if self.ghost[0].d:
-                        self.move(self.ghost[0])
+                    ghost.pathfinding(self.pacman.escape())
+                    if ghost.d:
+                        self.move(ghost)
                     self.processed_keys(pygame.key.get_pressed())
                     self.move(self.pacman)
-                    self.pacman.collide(self.ghost[0])
+                    self.pacman.collide(ghost)
                 else:
-                    self.ghost[0].pathfinding(self.pacman.current.pos)
-                    self.move(self.ghost[0])
-                    if self.ghost[0].d:
-                        self.move(self.ghost[0])
-                    self.ghost[0].collide(self.pacman)
+                    ghost.pathfinding(self.pacman.current.pos)
+                    if ghost.d:
+                        self.move(ghost)
+                    ghost.collide(self.pacman)
 
             self.processed_keys(pygame.key.get_pressed())
             self.move(self.pacman)
@@ -349,14 +348,14 @@ class Game:
                     self.clock.tick()
             self.dt = self.clock.tick(60) / 1000
             self.processed_move()
-            if self.pacman.live == 0:
-                self.running = False
+            if self.pacman.dead == True:
+                self.add_time = self.pacman.d_time - time.time()
             if self.pacman.d_time + 5 <= time.time():
                 self.pacman.dead = False
             if self.pacman.invul_time + 5 <= time.time():
                 self.pacman.invul = False
             if self.ghost[0].d_time + 5 <= time.time():
-                self.pacman.dead = False
+                self.ghost[0].dead = False
             if self.ghost[0].d_time + 5 <= time.time():
                 self.ghost[0].dead = False
             if ((self.pacman.current.pac_g.eat == False and self.pacman.dead == False and
