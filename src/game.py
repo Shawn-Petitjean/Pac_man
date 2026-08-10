@@ -7,7 +7,6 @@ from .menu import PauseMenu
 from .maze import Pac_gum, Cell, Super_pac_gum
 
 
-
 class Game:
     def __init__(self, screen: pygame.Surface, size: tuple[int, int],
                  cheats: Cheat, seed: int):
@@ -285,53 +284,37 @@ class Game:
             if sprite.current is not old_current:
                 self.snap_sprite_to_current(sprite)
 
-
+    def status(self, k: int):
+        if self.pacman.dead == True:
+            self.add_time = self.pacman.d_time - time.time()
+            k = 1
+        if self.pacman.d_time + 5 <= time.time():
+            self.pacman.dead = False
+        if self.pacman.invul_time + 5 <= time.time():
+            self.pacman.invul = False
+        if self.ghost[0].d_time + 5 <= time.time():
+            self.ghost[0].dead = False
+        if self.ghost[0].d_time + 5 <= time.time():
+            self.ghost[0].dead = False
+        if ((self.pacman.current.pac_g.eat == False and self.pacman.dead == False and
+            (self.pacman.current.x + (self.bloc / 2)) - 5 <= self.pacman.center[0]
+            and (self.pacman.current.x + (self.bloc / 2)) + 5 >= self.pacman.center[0]) and
+            ((self.pacman.current.y + (self.bloc / 2)) - 5 <= self.pacman.center[1]
+            and (self.pacman.current.y + (self.bloc / 2)) + 5 >= self.pacman.center[1])):
+            self.pacman.current.pac_g.eat = True
+            if self.pacman.current.pac_g.__class__.__name__ == "Super_pac_gum":
+                self.pacman.n_sgum += 1
+                self.pacman.invul = True
+                self.pacman.invul_time = time.time()
+            else:
+                self.pacman.n_gum += 1
+        if self.pacman.dead == False and k == 1:
+            self.timer += time.time() - self.pacman.d_time
+            self.add_time = 0
+            k = 0
     def run(self) -> str:
-        # r1 = 0 if len(self.mazegen.maze[0]) % 2 == 0 else 1
-        # r2 = 0 if len(self.mazegen.maze) % 2 == 0 else 1
-        # j = 0
-        # k = False
-        # walls = []
-        # count_l = 0
-        # for line in self.mazegen.maze:
-        #     i = 0
-        #     count_c = 0
-        #     for cell in line:
-        #         walls.extend(self.put_walls(cell, self.padding_h + i, self.padding_v + j))
-        #         if (count_c == round((len(self.mazegen.maze[0]) / 2) - 1) + r1 
-        #             and count_l == round((len(self.mazegen.maze) / 2) - 1) + r2):
-        #             pac_spawn = Cell(self.padding_h + i, self.padding_v + j, cell, count_c, count_l)
-        #             k = True
-        #         if not k:
-        #             self.cells.append(Cell(self.padding_h + i, self.padding_v + j, cell, count_c, count_l))
-        #         else:
-        #             self.cells.append(pac_spawn)
-        #             k = False
-        #         count_c += 1
-        #         i += self.bloc + self.m_bloc
-        #     j += self.bloc + self.m_bloc
-        #     count_l += 1
-        # self.init_pac_gum()
-        # pac_m = Pac_man(
-        #                 pac_spawn,
-        #                 pac_spawn.x + ((self.bloc - self.bloc * 0.6) / 2),
-        #                 pac_spawn.y + ((self.bloc - self.bloc * 0.6) / 2),
-        #                 [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)],
-        #                 self.bloc,
-        #                 self.mazegen
-        #                 )
-        # ghost_r = Red_Ghost(
-        #                     self.cells[0],
-        #                     self.cells[0].x + ((self.bloc - self.bloc * 0.6) / 2),
-        #                     self.cells[0].y + ((self.bloc - self.bloc * 0.6) / 2),
-        #                     [self.cells[0].x + (self.bloc / 2), self.cells[0].y + (self.bloc / 2)],
-        #                     self.bloc,
-        #                     self.mazegen,
-        #                     self.size
-        #                     )
-        # ghost_r.pathfinding(pac_m.current.pos)
-        # self.time = time.time()
         self.init_game()
+        k = 0
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -339,6 +322,7 @@ class Game:
                     self.running = False
                 elif (event.type == pygame.KEYDOWN
                         and event.key == pygame.K_ESCAPE):
+                    start_menu = time.time()
                     choice = PauseMenu(self.cheats).run(self.screen)
                     if choice == "menu":
                         self.running = False
@@ -348,27 +332,6 @@ class Game:
                     self.clock.tick()
             self.dt = self.clock.tick(60) / 1000
             self.processed_move()
-            if self.pacman.dead == True:
-                self.add_time = self.pacman.d_time - time.time()
-            if self.pacman.d_time + 5 <= time.time():
-                self.pacman.dead = False
-            if self.pacman.invul_time + 5 <= time.time():
-                self.pacman.invul = False
-            if self.ghost[0].d_time + 5 <= time.time():
-                self.ghost[0].dead = False
-            if self.ghost[0].d_time + 5 <= time.time():
-                self.ghost[0].dead = False
-            if ((self.pacman.current.pac_g.eat == False and self.pacman.dead == False and
-                (self.pacman.current.x + (self.bloc / 2)) - 5 <= self.pacman.center[0]
-                and (self.pacman.current.x + (self.bloc / 2)) + 5 >= self.pacman.center[0]) and
-                ((self.pacman.current.y + (self.bloc / 2)) - 5 <= self.pacman.center[1]
-                and (self.pacman.current.y + (self.bloc / 2)) + 5 >= self.pacman.center[1])):
-                self.pacman.current.pac_g.eat = True
-                if self.pacman.current.pac_g.__class__.__name__ == "Super_pac_gum":
-                    self.pacman.n_sgum += 1
-                    self.pacman.invul = True
-                    self.pacman.invul_time = time.time()
-                else:
-                    self.pacman.n_gum += 1
+            self.status(k)
             self.screen_refresh()
         return self.result

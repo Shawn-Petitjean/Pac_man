@@ -93,7 +93,6 @@ class Red_Ghost(Ghost):
                 pac_m.d_time = time.time()
                 pac_m.dead = True
                 pac_m.live -= 1
-                print('|||||||||||||||||||||||||||||||||')
             else:
                 pass
                 
