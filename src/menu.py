@@ -343,8 +343,7 @@ class CheatMenu(ButtonMenu):
 
     TOGGLES = [
         ("Invincible", "invincible"),
-        ("Vitesse", "speed"),
-        ("Niveau suivant", "next_level"),
+        ("Vitesse", "speed")
     ]
 
     def __init__(self, cheats: Cheat) -> None:

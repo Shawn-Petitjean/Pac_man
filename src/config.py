@@ -4,7 +4,10 @@ import sys
 import pygame
 
 PAC_F = pygame.image.load("sprites/pac_man_f.png")
-GHOST_R = "sprites/ghost/red_ghost.png"
+GHOST_R = "sprites/ghost/ghost_red.png"
+GHOST_O = "sprites/ghost/ghost_orange.png"
+GHOST_P = "sprites/ghost/ghost_pink.png"
+GHOST_B = "sprites/ghost/ghost_blue.png"
 W = 8
 S = 4
 E = 2
@@ -29,11 +32,18 @@ class GameConfig:
     points_per_ghost: int = 500
 
 
+GUM_SCORE = GameConfig().points_per_pacgum
+S_GUM_SCORE = GameConfig().points_per_super_pacgum
+GHOST_SCORE = GameConfig().points_per_ghost
+SEED = GameConfig().seed
+LIVE = GameConfig().lives
+MAX_T = GameConfig().level_max_time
+
+
 @dataclass
 class Cheat:
     invincible: bool = False
     speed: bool = False
-    next_level: bool = False
 
 
 def read_config_file(path: str) -> str:

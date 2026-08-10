@@ -29,14 +29,14 @@ class Sprite:
 
 
 class Pac_man(Sprite):
-    def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc: int, maze: MazeGenerator):
+    def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc: int, maze: MazeGenerator, live: int):
         super().__init__(current, x, y, center, bloc, maze)
         self.n_gum = 0
         self.n_sgum = 0
         self.n_ghost = 0
         self.d_time = 0
-        self.live = 3
-        self.speed = 150
+        self.live = live
+        self.speed = 120
         self.sprite = pygame.image.load("sprites/pac_man/pac_man_f.png").convert()
         self.sprite = pygame.transform.scale(self.sprite,
                                             (
@@ -48,8 +48,8 @@ class Pac_man(Sprite):
         self.mazegen = maze
 
     def escape(self):
-        x = 0 if self.current.pos[0] <= len(self.mazegen.maze) else len(self.mazegen.maze) - 1
-        y = 0 if self.current.pos[1] <= len(self.mazegen.maze[0]) else len(self.mazegen.maze[0]) - 1
+        x = 0 if self.current.pos[0] >= len(self.mazegen.maze) else len(self.mazegen.maze) - 1
+        y = 0 if self.current.pos[1] >= len(self.mazegen.maze[0]) else len(self.mazegen.maze[0]) - 1
         return [x, y]
 
     def collide(self, ghost: Ghost):
