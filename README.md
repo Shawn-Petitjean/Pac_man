@@ -14,8 +14,8 @@ defaults) and a persistent top-10 highscore table.
 | Menus | Mouse or arrow keys, `Enter` to validate |
 
 Eat every pac-gum to clear the level, avoid the ghosts, and grab a super
-pac-gum to turn them edible for a while. See `INSTRUCTIONS.txt` for the full
-in-package help (it is also shipped inside the build).
+pac-gum to turn them edible for a while. The in-game **Instructions** screen
+(from the main menu) shows the full controls and rules.
 
 ## Requirements
 
@@ -80,8 +80,8 @@ self-contained build in `dist/`:
 
 PyInstaller builds for the host OS only, so run `make package` on each
 platform you want to target. The build bundles the sprites, the default
-`config.json`, `INSTRUCTIONS.txt` and the `mazegenerator` dependency, so the
-package is fully self-contained.
+`config.json` and the `mazegenerator` dependency, so the package is fully
+self-contained.
 
 ## Deploy to itch.io
 

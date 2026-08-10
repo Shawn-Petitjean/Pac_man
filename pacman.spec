@@ -17,7 +17,6 @@ from PyInstaller.utils.hooks import collect_all
 datas = [
     ("sprites", "sprites"),
     ("config.json", "."),
-    ("INSTRUCTIONS.txt", "."),
 ]
 
 # The maze generator ships as a wheel; pull in all of its files.
