@@ -14,11 +14,13 @@ class Game:
         self.time = 0
         self.timer = time.time()
         self.add_time = 0
+        self.n_gum = 0
         self.death_speed = 300
         self.size = size
         self. font = pygame.font.Font(None, 36)
         self.pacman = None
         self.ghost = []
+        self.level = 0
         self.walls = []
         self.s_gum_score = S_GUM_SCORE
         self.gum_score = GUM_SCORE
@@ -78,29 +80,42 @@ class Game:
             count_l += 1
         self.init_s_pac_gum()
         self.init_pac_gum()
-        self.pacman = Pac_man(
-                        pac_spawn,
-                        pac_spawn.x + ((self.bloc - self.bloc * 0.6) / 2),
-                        pac_spawn.y + ((self.bloc - self.bloc * 0.6) / 2),
-                        [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)],
-                        self.bloc,
-                        self.mazegen
-                        )
-        self.ghost.append(Red_Ghost(
-                            self.cells[0],
-                            self.cells[0].x + ((self.bloc - self.bloc * 0.6) / 2),
-                            self.cells[0].y + ((self.bloc - self.bloc * 0.6) / 2),
-                            [self.cells[0].x + (self.bloc / 2), self.cells[0].y + (self.bloc / 2)],
+        if self.level == 0:
+            self.pacman = Pac_man(
+                            pac_spawn,
+                            pac_spawn.x + ((self.bloc - self.bloc * 0.6) / 2),
+                            pac_spawn.y + ((self.bloc - self.bloc * 0.6) / 2),
+                            [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)],
                             self.bloc,
-                            self.mazegen,
-                            self.size
-                            ))
+                            self.mazegen
+                            )
+            self.ghost.append(Red_Ghost(
+                                self.cells[0],
+                                self.cells[0].x + ((self.bloc - self.bloc * 0.6) / 2),
+                                self.cells[0].y + ((self.bloc - self.bloc * 0.6) / 2),
+                                [self.cells[0].x + (self.bloc / 2), self.cells[0].y + (self.bloc / 2)],
+                                self.bloc,
+                                self.mazegen,
+                                self.size
+                                ))
+        else:
+            self.pacman.current = pac_spawn
+            self.pacman.pos = [pac_spawn.x + (self.bloc / 2), pac_spawn.y + (self.bloc / 2)]
+            self.pacman.x = pac_spawn.x + ((self.bloc - self.bloc * 0.6) / 2)
+            self.pacman.y = pac_spawn.y + ((self.bloc - self.bloc * 0.6) / 2)
+            self.pacman.maze = self.mazegen
+            for ghost in self.ghost:
+                ghost.current = self.cells[0]
+                ghost.x = self.cells[0].x + ((self.bloc - self.bloc * 0.6) / 2)
+                ghost.y = self.cells[0].y + ((self.bloc - self.bloc * 0.6) / 2)
+                ghost.pos = [self.cells[0].x + (self.bloc / 2), self.cells[0].y + (self.bloc / 2)]
+                ghost.maze = self.mazegen
         self.ghost[0].pathfinding(self.pacman.current.pos)
         self.time = time.time()
 
     def screen_refresh(self):
             score = (self.pacman.n_gum * self.gum_score) + (self.pacman.n_sgum * self.s_gum_score) + (self.pacman.n_ghost * self.ghost_score)
-            score_text = self.font.render(f"Score : {score}" + f"Timer : {round(time.time() - self.timer + self.add_time)}", True, (255, 255, 255))
+            score_text = self.font.render(f"Score : {score}" + f" Timer : {500 - round(time.time() - self.timer + self.add_time)} Lives : {self.pacman.live}", True, (255, 255, 255))
             pygame.display.flip()
             self.screen.fill("black")
             for wall in self.walls:
@@ -148,6 +163,7 @@ class Game:
     def init_pac_gum(self):
         for cell in self.cells:
             if not cell.value == 15 and not cell.pac_g:
+                self.n_gum += 1
                 cell.pac_g = Pac_gum(
                                      cell.x - (self.bloc - (self.bloc * 0.1)),
                                      cell.y + self.bloc - (self.bloc * 0.1),
@@ -162,6 +178,7 @@ class Game:
     def init_s_pac_gum(self):
         ls = [self.rows + 1, (self.rows * 2) - 2, ((self.rows) * (self.cols)) - self.rows - 2, ((self.rows - 1) * (self.cols - 1))]
         for pos in ls:
+            self.n_gum += 1
             self.cells[pos].pac_g = Super_pac_gum(
                                                     self.cells[pos].x - (self.bloc - (self.bloc * 0.1)),
                                                     self.cells[pos].y + self.bloc - (self.bloc * 0.1),
@@ -201,8 +218,6 @@ class Game:
                     ghost.pathfinding(self.pacman.escape())
                     if ghost.d:
                         self.move(ghost)
-                    self.processed_keys(pygame.key.get_pressed())
-                    self.move(self.pacman)
                     self.pacman.collide(ghost)
                 else:
                     ghost.pathfinding(self.pacman.current.pos)
@@ -312,6 +327,19 @@ class Game:
             self.timer += time.time() - self.pacman.d_time
             self.add_time = 0
             k = 0
+        if self.pacman.live == 0:
+            self.running = False
+        if 500 - round(time.time() - self.timer + self.add_time) <= 0:
+            self.running = False
+        if self.level == 5:
+            self.running = False
+        if self.pacman.n_gum + self.pacman.n_sgum == self.n_gum - 300:
+            self.level += 1
+            self.walls = []
+            self.cells = []
+            self.mazegen.generate()
+            self.init_game()
+
     def run(self) -> str:
         self.init_game()
         k = 0
@@ -330,6 +358,8 @@ class Game:
                         self.result = "quit"
                         self.running = False
                     self.clock.tick()
+            print(self.pacman.n_gum + self.pacman.n_sgum)
+            print(self.n_gum)
             self.dt = self.clock.tick(60) / 1000
             self.processed_move()
             self.status(k)
