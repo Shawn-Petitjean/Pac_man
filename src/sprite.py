@@ -1,5 +1,4 @@
 import pygame
-from .config import GHOST_R
 from mazegenerator import MazeGenerator
 from .maze import Cell
 import time
@@ -67,10 +66,30 @@ class Pac_man(Sprite):
 
 
 class Ghost(Sprite):
-    def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc, maze: MazeGenerator):
+    def __init__(self, current: Cell, x: int, y: int, center: list[int, int], bloc: int,
+                 maze: MazeGenerator, size: tuple[int, int], sprite):
         super().__init__(current, x, y, center, bloc, maze)
         self.d_time = 0
         self.speed = 70
+        self.sprite = pygame.image.load(sprite).convert()
+        self.sprite = pygame.transform.scale(self.sprite,
+                                            (
+                                             bloc * 0.6,
+                                             bloc * 0.6
+                                            ))
+        self.size = size
+
+    def collide(self, pac_m: Pac_man):
+        if ((self.center[0] - (self.bloc / 2)) <= pac_m.center[0]
+            and (self.center[0] + (self.bloc / 2)) >= pac_m.center[0] and
+            ((self.center[1] - (self.bloc / 2)) <= pac_m.center[1]
+            and (self.center[1] + (self.bloc / 2)) >= pac_m.center[1])):
+            if pac_m.invul == False:
+                pac_m.d_time = time.time()
+                pac_m.dead = True
+                pac_m.live -= 1
+            else:
+                pass
 
 
 class Red_Ghost(Ghost):
