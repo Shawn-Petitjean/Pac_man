@@ -1,0 +1,31 @@
+PAC-MAN
+=======
+
+CONTROLS
+--------
+  Move ............ W A S D  (or the arrow keys)
+  Pause ........... Escape
+  Menus ........... Mouse or arrow keys, Enter to validate
+
+GOAL
+----
+  Eat every pac-gum to clear the level. Avoid the ghosts.
+  A super pac-gum makes the ghosts edible for a short time.
+  Losing all your lives or running out of time ends the game.
+
+MENU
+----
+  Start Game ...... begins a new game
+  Highscores ...... top 10 best scores
+  Instructions .... this help screen
+  Exit ............ quit the game
+  In-game "Cheat" (pause menu): invincibility / speed toggles
+
+CONFIGURATION
+-------------
+  Settings live in config.json (bundled with the game): maze size,
+  seed, level time limit, lives and scoring. Missing or invalid values
+  fall back to safe defaults, so the game always starts.
+
+  Highscores are saved to your home folder (~/.pacman/highscores.json)
+  when running the packaged build.

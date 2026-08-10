@@ -6,4 +6,10 @@ __pycache__
 
 *.pyc
 *.pyo
-.DS_storehighscores.json
+
+.DS_Store
+highscores.json
+
+# PyInstaller build artifacts
+build/
+dist/

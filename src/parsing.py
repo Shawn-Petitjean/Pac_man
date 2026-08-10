@@ -1,28 +1,38 @@
+import json
 from typing import Any
+
 from src.config import GameConfig, LevelConfig, get_int, get_str
 from src.config import read_config_file, strip_comments
-import json
 
 
 def parse_config(text: str) -> dict[str, Any]:
-    """Parse the comment-free JSON text into a dictionary."""
-    data = json.loads(text)
+    """Parse comment-free JSON text into a dictionary.
 
+    Empty content (or comments only) yields an empty dict, so the
+    configuration still loads with every default value.
+    """
+    if not text.strip():
+        return {}
+    data = json.loads(text)
     if not isinstance(data, dict):
-        raise ValueError("Le fichier de config doit etre un objet JSON")
+        raise ValueError("the config file must contain a JSON object")
     return data
 
 
 def build_config(config_path: str) -> GameConfig:
-    """Validate a raw config dict into a safe GameConfig."""
+    """Read, parse and validate a config file into a safe GameConfig."""
     text = read_config_file(config_path)
     text = strip_comments(text)
     data = parse_config(text)
 
-    highscore_filename = get_str(data, "highscore_filename", "highscore")
+    highscore_filename = get_str(data, "highscore_filename",
+                                 "highscores.json")
     lives = get_int(data, "lives", 3, minimum=1)
-    width = get_int(data["size"], "width", 20, minimum=10)
-    height = get_int(data["size"], "height", 20, minimum=10)
+    size_data = data.get("size", {})
+    if not isinstance(size_data, dict):
+        size_data = {}
+    width = get_int(size_data, "width", 20, minimum=15)
+    height = get_int(size_data, "height", 20, minimum=15)
     level_max_time = get_int(data, "level_max_time", 90, minimum=1)
     points_per_pacgum = get_int(data, "points_per_pacgum", 10, minimum=0)
     points_per_super_pacgum = get_int(
@@ -38,5 +48,5 @@ def build_config(config_path: str) -> GameConfig:
         lives=lives,
         points_per_pacgum=points_per_pacgum,
         points_per_super_pacgum=points_per_super_pacgum,
-        points_per_ghost=points_per_ghost
+        points_per_ghost=points_per_ghost,
     )

@@ -4,7 +4,7 @@ EXE = $(SRC)
 VENV = .venv
 PYTHON = $(VENV)/bin/python3
 
-TRASH = $(SRC)/__pycache__ llm_sdk/__pycache__ __pycache__ $(VENV) .mypy_cache data/output .uv_cache
+TRASH = $(SRC)/__pycache__ llm_sdk/__pycache__ __pycache__ $(VENV) .mypy_cache data/output .uv_cache build dist
 
 MYPY_FLAGS = --strict --no-error-summary
 
@@ -40,6 +40,16 @@ install:
 
 run:
 	uv run python -m $(EXE) config.json $(FLAGS)
+
+package:
+	@echo "$(BOLD)Packaging the game with PyInstaller:$(RESET)"
+	@$(PYTHON) -m PyInstaller pacman.spec --noconfirm --clean
+	@if [ -d dist/Pac-Man.app ]; then \
+		echo "$(YELLOW)Cleaning attributes and ad-hoc signing the .app...$(RESET)"; \
+		xattr -cr dist/Pac-Man.app; \
+		codesign --force --deep --sign - dist/Pac-Man.app >/dev/null 2>&1 || true; \
+	fi
+	@echo "$(SUCCESS)\nPackage ready in $(GREEN)dist/$(RESET)"
 
 lint:
 	@echo "$(BOLD)Verifying project source code:$(RESET)"

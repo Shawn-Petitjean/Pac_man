@@ -8,6 +8,13 @@ dependencies = [
     "flake8",
     "mypy",
     "pillow",
+    "pyinstaller",
     "pydantic",
     "pygame-ce"
 ]
+
+[tool.mypy]
+
+[[tool.mypy.overrides]]
+module = ["mazegenerator", "mazegenerator.*"]
+ignore_missing_imports = true

@@ -6,17 +6,16 @@ from src.highscore import Highscores
 
 
 class Screen(ABC):
-    """Base commune a tous les ecrans (menu, sous-menus, pause, game over...).
+    """Base class shared by every screen (menu, sub-menus, pause, end...).
 
-    Porte la boucle commune (run) et la police adaptative ; chaque ecran
-    concret implemente seulement _handle_events() et _draw(). Pattern
-    "template method" : run() fixe le squelette, les sous-classes
-    remplissent les trous.
+    Owns the common loop (run) and the responsive font; each concrete
+    screen only implements _handle_events() and _draw(). Template-method
+    pattern: run() sets the skeleton, subclasses fill the gaps.
     """
 
     FPS = 60
     BACKGROUND = "black"
-    FONT_RATIO = 0.06        # taille de police en % de la hauteur
+    FONT_RATIO = 0.06
 
     def __init__(self) -> None:
         pygame.font.init()
@@ -24,10 +23,10 @@ class Screen(ABC):
         self.running = False
         self.result = ""
         self.font = pygame.font.Font(None, 48)
-        self._font_h = 0    # hauteur de fenetre pour laquelle self.font existe
+        self._font_h = 0
 
     def run(self, screen: pygame.Surface) -> str:
-        """Boucle de l'ecran. Renvoie l'action choisie (ou "" au retour)."""
+        """Run the screen loop and return the chosen action."""
         self.screen = screen
         self.running = True
         self.result = ""
@@ -38,42 +37,45 @@ class Screen(ABC):
         return self.result
 
     def _activate(self, action: str) -> None:
-        """Termine l'ecran en renvoyant l'action choisie."""
+        """End the screen, returning the chosen action."""
         self.result = action
         self.running = False
 
     def _update_font(self, h: int) -> None:
-        """Police adaptative : recreee seulement si la hauteur a change."""
+        """Responsive font: rebuilt only when the window height changes."""
         if h != self._font_h:
             self.font = pygame.font.Font(None, int(h * self.FONT_RATIO))
             self._font_h = h
 
     def _draw_background(self) -> None:
-        """Fond commun a tous les ecrans. Surchargeable (ex: la pause
-        dessine par-dessus le jeu au lieu de remplir l'ecran)."""
+        """Common background. Overridable (e.g. pause draws over the game)."""
         self.screen.fill(self.BACKGROUND)
 
     @abstractmethod
     def _handle_events(self) -> None:
-        """Traite les evenements de la frame (defini par chaque ecran)."""
+        """Handle this frame's events (defined by each screen)."""
 
     @abstractmethod
     def _draw(self) -> None:
-        """Dessine la frame (defini par chaque ecran)."""
+        """Draw this frame (defined by each screen)."""
 
 
 class TextScreen(Screen):
-    """Ecran affichant une liste de lignes de texte centrees.
+    """Screen showing a list of centered text lines.
 
-    Gere le rendu des lignes et la navigation (QUIT -> "quit", Echap ->
-    retour au menu). Les sous-classes fournissent le contenu via _lines().
+    Handles line rendering and navigation (QUIT -> "quit", Escape ->
+    back to menu). Subclasses provide the content via _lines().
     """
 
     LINE_GAP = 0.015
 
     @abstractmethod
     def _lines(self) -> list[str]:
-        """Les lignes a afficher (defini par chaque ecran)."""
+        """The lines to display (defined by each screen)."""
+
+    def _line_color(self, index: int, line: str) -> str:
+        """Colour of a line (white by default), overridable per line."""
+        return "white"
 
     def _handle_events(self) -> None:
         for event in pygame.event.get():
@@ -95,13 +97,13 @@ class TextScreen(Screen):
         n = len(lines)
         for i, line in enumerate(lines):
             y = h / 2 + (i - (n - 1) / 2) * line_h
-            text = self.font.render(line, True, "white")
+            text = self.font.render(line, True, self._line_color(i, line))
             self.screen.blit(text, text.get_rect(center=(cx, y)))
         pygame.display.flip()
 
 
 class Instructions(TextScreen):
-    """Ecran d'aide : affiche les controles et les regles (lignes fixes)."""
+    """Help screen: shows the controls and rules (fixed lines)."""
 
     FONT_RATIO = 0.04
 
@@ -121,7 +123,7 @@ class Instructions(TextScreen):
 
 
 class HighscoresScreen(TextScreen):
-    """Affiche le top 10 des scores (lignes calculees depuis les donnees)."""
+    """Show the top 10 scores (lines computed from the data)."""
 
     def __init__(self, highscores: Highscores) -> None:
         super().__init__()
@@ -140,11 +142,20 @@ class HighscoresScreen(TextScreen):
 
 
 class EndScreen(TextScreen):
-    def __init__(self, highscores: Highscores, score: int, title: str) -> None:
+    """End screen: victory or defeat, score, then name entry.
+
+    A single screen for both cases; `won` changes the title and its colour.
+    """
+
+    WON_COLOR = "yellow"
+    LOST_COLOR = "red"
+
+    def __init__(self, highscores: Highscores, score: int,
+                 won: bool) -> None:
         super().__init__()
         self.highscores = highscores
         self.score = score
-        self.title = title
+        self.won = won
         self.name = ""
 
     def _handle_events(self) -> None:
@@ -160,17 +171,23 @@ class EndScreen(TextScreen):
                     self.name += event.unicode
 
     def _validate(self) -> None:
-        # clean_name est reapplique dans add()
         self.highscores.add(self.name, self.score)
         self.highscores.save()
         self._activate("")
 
     def _lines(self) -> list[str]:
+        head = "VICTORY !" if self.won else "GAME OVER"
         return [
-            self.title,
+            head,
             "",
             f"Score : {self.score}",
             "",
             f"Ton nom : {self.name}",
             "Entree pour valider",
         ]
+
+    def _line_color(self, index: int, line: str) -> str:
+        """Title (line 0) coloured: yellow on victory, red on defeat."""
+        if index == 0:
+            return self.WON_COLOR if self.won else self.LOST_COLOR
+        return "white"
