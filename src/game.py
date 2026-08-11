@@ -366,7 +366,7 @@ class Game:
             self.timer += time.time() - self.pacman.d_time
             self.add_time = 0
             k = 0
-        if self.pacman.live == 0:
+        if self.pacman.live <= 0:
             self.running = False
         if self.max_t - round(time.time() - self.timer + self.add_time) <= 0:
             self.running = False
