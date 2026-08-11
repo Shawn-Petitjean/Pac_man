@@ -5,7 +5,6 @@ import pygame
 from mazegenerator import MazeGenerator
 
 from .maze import Cell
-from .config import GHOST_R
 
 
 class Sprite:
@@ -90,30 +89,7 @@ class Ghost(Sprite):
                 and self.center[0] + (self.bloc / 2) >= pac_m.center[0]
                 and self.center[1] - (self.bloc / 2) <= pac_m.center[1]
                 and self.center[1] + (self.bloc / 2) >= pac_m.center[1]):
-            if pac_m.invul is False:
-                pac_m.d_time = time.time()
-                pac_m.dead = True
-                pac_m.live -= 1
-            else:
-                pass
-
-
-class Red_Ghost(Ghost):
-    def __init__(self, current: Cell, x: float, y: float,
-                 center: list[float], bloc: float, maze: MazeGenerator,
-                 size: tuple[int, int]) -> None:
-        super().__init__(current, x, y, center, bloc, maze)  # type: ignore
-        self.sprite = pygame.image.load(GHOST_R).convert()
-        self.sprite = pygame.transform.scale(
-            self.sprite, (bloc * 0.6, bloc * 0.6))
-        self.size = size
-
-    def collide(self, pac_m: Pac_man) -> None:
-        if (self.center[0] - (self.bloc / 2) <= pac_m.center[0]
-                and self.center[0] + (self.bloc / 2) >= pac_m.center[0]
-                and self.center[1] - (self.bloc / 2) <= pac_m.center[1]
-                and self.center[1] + (self.bloc / 2) >= pac_m.center[1]):
-            if pac_m.invul is False:
+            if pac_m.invul is False and not pac_m.dead:
                 pac_m.d_time = time.time()
                 pac_m.dead = True
                 pac_m.live -= 1
