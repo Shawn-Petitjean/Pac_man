@@ -373,7 +373,7 @@ class Game:
         if self.level == 5:
             self.win = True
             self.running = False
-        if self.pacman.n_gum + self.pacman.n_sgum == self.n_gum - 300:
+        if self.pacman.n_gum + self.pacman.n_sgum == self.n_gum:
             self.level += 1
             self.walls = []
             self.cells = []
