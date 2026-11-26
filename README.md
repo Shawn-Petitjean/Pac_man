@@ -1,3 +1,5 @@
+*This project has been created by Guillaume-Lacolley and Shawn-Petitjean.*
+
 # Pac-Man
 
 A Pac-Man clone written in Python with [pygame-ce](https://pyga.me/), built
